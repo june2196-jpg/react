@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
+import { loadAppState, saveAppState } from './utils/appStorage';
 import type { Provider } from './types';
 import './App.css';
 
@@ -11,15 +12,21 @@ const PROVIDER_CONFIG = {
 } as const;
 
 function App() {
-  const [apiKey, setApiKey] = useState('');
+  const [initialState] = useState(loadAppState);
+  const [apiKey, setApiKey] = useState(initialState.apiKey);
   const [showKey, setShowKey] = useState(false);
-  const [provider, setProvider] = useState<Provider>('google');
+  const [provider, setProvider] = useState<Provider>(initialState.provider);
+  const [promptHistory, setPromptHistory] = useState(initialState.promptHistory);
   const [envKeys, setEnvKeys] = useState<Record<Provider, boolean>>({
     anthropic: false,
     google: false,
   });
   const { components, isLoading, error, generate, removeComponent, clearAll } =
-    useComponentGenerator();
+    useComponentGenerator(initialState.components);
+
+  useEffect(() => {
+    saveAppState({ apiKey, provider, promptHistory, components });
+  }, [apiKey, provider, promptHistory, components]);
 
   useEffect(() => {
     fetch('/api/config')
@@ -30,12 +37,18 @@ function App() {
 
   const hasEnvKey = envKeys[provider];
 
-  const handleGenerate = (prompt: string) => {
+  const handleGenerate = async (prompt: string) => {
     if (!apiKey.trim() && !hasEnvKey) {
       alert(`${PROVIDER_CONFIG[provider].label} API 키를 입력하거나 .env에 설정해주세요.`);
       return;
     }
-    generate(prompt, apiKey || undefined, provider);
+    const generated = await generate(prompt, apiKey || undefined, provider);
+    if (generated) {
+      setPromptHistory((previousHistory) => [
+        prompt,
+        ...previousHistory.filter((historyPrompt) => historyPrompt !== prompt),
+      ]);
+    }
   };
 
   const handleProviderChange = (newProvider: Provider) => {
@@ -68,7 +81,11 @@ function App() {
 
       <main className="workspace">
         <section className="composer-panel" aria-label="컴포넌트 생성">
-          <PromptInput onGenerate={handleGenerate} isLoading={isLoading} />
+          <PromptInput
+            onGenerate={handleGenerate}
+            isLoading={isLoading}
+            history={promptHistory}
+          />
         </section>
 
         <aside className="settings-panel" aria-label="실행 설정">

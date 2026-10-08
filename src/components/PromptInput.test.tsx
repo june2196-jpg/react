@@ -37,4 +37,19 @@ describe('PromptInput', () => {
     expect(screen.getByRole('button', { name: '컴포넌트 생성' })).toBeDisabled();
     expect(onGenerate).not.toHaveBeenCalled();
   });
+
+  it('프롬프트 히스토리를 다시 입력에 적용할 수 있다', async () => {
+    const user = userEvent.setup();
+    render(
+      <PromptInput
+        onGenerate={vi.fn()}
+        isLoading={false}
+        history={['대시보드 카드 만들어줘']}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: '대시보드 카드 만들어줘' }));
+
+    expect(screen.getByRole('textbox')).toHaveValue('대시보드 카드 만들어줘');
+  });
 });
