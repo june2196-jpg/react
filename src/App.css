@@ -53,8 +53,12 @@
 .key-status--ready { color: var(--success); }
 
 .prompt-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: stretch; }
+.prompt-input-wrap { min-width: 0; }
 .prompt-textarea { min-height: 142px; padding: 17px; resize: vertical; font-size: 1rem; line-height: 1.6; }
 .prompt-textarea::placeholder { color: var(--text-soft); }
+.prompt-textarea[aria-invalid="true"] { border-color: #ff6b5f; }
+.prompt-length { display: flex; justify-content: space-between; gap: 12px; margin-top: 7px; color: var(--text-soft); font-family: var(--mono); font-size: .7rem; }
+.prompt-length--error { color: #ff8b81; }
 .btn-generate { min-width: 140px; padding: 0 19px; border: 1px solid var(--primary); border-radius: 0; background: var(--primary); color: #151108; cursor: pointer; font-family: var(--mono); font-size: .77rem; font-weight: 600; box-shadow: 3px 3px 0 #725100; transition: transform .16s ease, background .16s ease; }
 .btn-generate:hover:not(:disabled) { background: var(--primary-hover); transform: translate(-1px,-1px); }
 .btn-generate:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }

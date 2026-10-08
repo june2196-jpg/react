@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PromptInput } from './PromptInput';
 
@@ -25,5 +25,16 @@ describe('PromptInput', () => {
   it('로딩 중에는 생성 버튼이 비활성이고 "생성 중..." 을 보여준다', () => {
     render(<PromptInput onGenerate={vi.fn()} isLoading={true} />);
     expect(screen.getByRole('button', { name: '생성 중...' })).toBeDisabled();
+  });
+
+  it('500자를 초과하면 오류를 안내하고 생성을 막는다', () => {
+    const onGenerate = vi.fn();
+    render(<PromptInput onGenerate={onGenerate} isLoading={false} />);
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '가'.repeat(501) } });
+
+    expect(screen.getByText('500자를 초과할 수 없습니다.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '컴포넌트 생성' })).toBeDisabled();
+    expect(onGenerate).not.toHaveBeenCalled();
   });
 });
