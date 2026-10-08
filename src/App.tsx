@@ -13,7 +13,7 @@ const PROVIDER_CONFIG = {
 
 function App() {
   const [initialState] = useState(loadAppState);
-  const [apiKey, setApiKey] = useState(initialState.apiKey);
+  const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [provider, setProvider] = useState<Provider>(initialState.provider);
   const [promptHistory, setPromptHistory] = useState(initialState.promptHistory);
@@ -25,8 +25,8 @@ function App() {
     useComponentGenerator(initialState.components);
 
   useEffect(() => {
-    saveAppState({ apiKey, provider, promptHistory, components });
-  }, [apiKey, provider, promptHistory, components]);
+    saveAppState({ provider, promptHistory, components });
+  }, [provider, promptHistory, components]);
 
   useEffect(() => {
     fetch('/api/config')

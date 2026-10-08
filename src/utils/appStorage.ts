@@ -1,16 +1,17 @@
 import type { GeneratedComponent, Provider } from '../types';
 
 export const APP_STORAGE_KEY = 'react-component-generator:app-state';
+export const MAX_PROMPT_HISTORY = 20;
+export const MAX_PERSISTED_COMPONENTS = 10;
+export const MAX_PERSISTED_STATE_LENGTH = 1_000_000;
 
 export interface PersistedAppState {
-  apiKey: string;
   provider: Provider;
   promptHistory: string[];
   components: GeneratedComponent[];
 }
 
 const defaultState: PersistedAppState = {
-  apiKey: '',
   provider: 'google',
   promptHistory: [],
   components: [],
@@ -43,6 +44,30 @@ function restoreComponent(value: unknown): GeneratedComponent | null {
   return { id, prompt, code, createdAt: restoredCreatedAt };
 }
 
+function limitStoredState(state: PersistedAppState): PersistedAppState {
+  const limitedState: PersistedAppState = {
+    provider: state.provider,
+    promptHistory: state.promptHistory.slice(0, MAX_PROMPT_HISTORY),
+    components: state.components.slice(0, MAX_PERSISTED_COMPONENTS),
+  };
+
+  while (JSON.stringify(limitedState).length > MAX_PERSISTED_STATE_LENGTH) {
+    if (limitedState.components.length > 0) {
+      limitedState.components.pop();
+      continue;
+    }
+
+    if (limitedState.promptHistory.length > 0) {
+      limitedState.promptHistory.pop();
+      continue;
+    }
+
+    break;
+  }
+
+  return limitedState;
+}
+
 export function loadAppState(): PersistedAppState {
   try {
     const stored = localStorage.getItem(APP_STORAGE_KEY);
@@ -51,8 +76,7 @@ export function loadAppState(): PersistedAppState {
     const parsed: unknown = JSON.parse(stored);
     if (!isRecord(parsed)) return defaultState;
 
-    return {
-      apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : '',
+    return limitStoredState({
       provider: isProvider(parsed.provider) ? parsed.provider : 'google',
       promptHistory: Array.isArray(parsed.promptHistory)
         ? parsed.promptHistory.filter((prompt): prompt is string => typeof prompt === 'string')
@@ -60,7 +84,7 @@ export function loadAppState(): PersistedAppState {
       components: Array.isArray(parsed.components)
         ? parsed.components.map(restoreComponent).filter((component): component is GeneratedComponent => component !== null)
         : [],
-    };
+    });
   } catch {
     return defaultState;
   }
@@ -68,7 +92,7 @@ export function loadAppState(): PersistedAppState {
 
 export function saveAppState(state: PersistedAppState): void {
   try {
-    localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(limitStoredState(state)));
   } catch {
     // 저장소 접근이 차단되거나 용량이 부족한 경우에도 생성 흐름은 유지한다.
   }
