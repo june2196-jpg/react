@@ -4,6 +4,7 @@ import { MAX_PROMPT_LENGTH, isPromptWithinLimit } from '../utils/promptValidatio
 interface PromptInputProps {
   onGenerate: (prompt: string) => void;
   isLoading: boolean;
+  history?: string[];
 }
 
 const EXAMPLES = [
@@ -15,7 +16,7 @@ const EXAMPLES = [
   '테이블 행 상세보기 패널. 선택한 고객의 기본 정보와 최근 활동 표시',
 ];
 
-export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
+export function PromptInput({ onGenerate, isLoading, history = [] }: PromptInputProps) {
   const [prompt, setPrompt] = useState('');
   const isPromptTooLong = !isPromptWithinLimit(prompt);
 
@@ -82,6 +83,21 @@ export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
           </button>
         ))}
       </div>
+      {history.length > 0 && (
+        <div className="prompt-history">
+          <span className="examples-label">최근 프롬프트</span>
+          {history.map((historyPrompt) => (
+            <button
+              key={historyPrompt}
+              className="history-chip"
+              onClick={() => setPrompt(historyPrompt)}
+              type="button"
+            >
+              {historyPrompt}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
